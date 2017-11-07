@@ -5,15 +5,58 @@ using System.Web;
 
 namespace SimpleSession
 {
-
-    public class SessionProvider
+    public class MyApplication
     {
-        private SessionProvider() { }
+        private readonly string SessionID = "MySessionID";
+
+        public HttpRequest Request { get; private set; }
+        public HttpResponse Respone { get; private set; }
+
+        public MyApplication(HttpContext context)
+        {
+            Respone = context.Response;
+            Request = context.Request;
+        }
+
+        private static SessionPool _container = new SessionPool();
+
+        private static SessionPool SessionPool
+        {
+            get
+            {
+                return _container;
+            }
+        }
+
+        public SessionObject Session
+        {
+            get
+            {
+                return GetSessionObj();
+            }
+        }
+
         /// <summary>
-        /// 
+        /// 取得Session對象
         /// </summary>
-        static SessionPool _container = new SessionPool();
-        public static SessionPool Session { get { return _container; } }
+        /// <returns></returns>
+        private SessionObject GetSessionObj()
+        {
+            Guid sessionGuid;
+            var cookieSessionID = HttpContext.Current.Request.Cookies[SessionID];
+            if (cookieSessionID == null)
+            {
+                sessionGuid = Guid.NewGuid();
+                HttpCookie cookie = new HttpCookie(SessionID, sessionGuid.ToString())
+                { Expires = DateTime.Now.AddDays(60) };
+                Respone.Cookies.Add(cookie);
+            }
+            else
+            {
+                sessionGuid = Guid.Parse(cookieSessionID.Value);
+            }
+            return _container[sessionGuid];
+        }
     }
 
     /// <summary>
@@ -21,7 +64,8 @@ namespace SimpleSession
     /// </summary>
     public class SessionPool
     {
-        Dictionary<Guid, SessionObject> _SessionContain = new Dictionary<Guid, SessionObject>();
+        private Dictionary<Guid, SessionObject> _SessionContain = new Dictionary<Guid, SessionObject>();
+
         public SessionObject this[Guid index]
         {
             get
@@ -46,7 +90,7 @@ namespace SimpleSession
     /// </summary>
     public class SessionObject
     {
-        CacheDictionary cache = new CacheDictionary();
+        private CacheDictionary cache = new CacheDictionary();
 
         public object this[string index]
         {
@@ -69,6 +113,5 @@ namespace SimpleSession
         {
             return cache.GetOrDefault(key, () => default(object));
         }
-
     }
 }

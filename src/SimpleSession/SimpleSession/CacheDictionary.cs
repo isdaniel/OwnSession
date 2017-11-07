@@ -12,7 +12,10 @@ namespace SimpleSession
     /// </summary>
     public class CacheDictionary : Dictionary<string, object>
     {
-        private readonly Dictionary<string, CancellationTokenSource> _expireTasks =
+        /// <summary>
+        /// 掌管物件存活時間的集合
+        /// </summary>
+        private readonly Dictionary<string, CancellationTokenSource> _expireContaner =
             new Dictionary<string, CancellationTokenSource>();
 
         /// <summary>
@@ -22,7 +25,6 @@ namespace SimpleSession
 
         public CacheDictionary() : this(defaultExpiration: 5)
         {
-
         }
 
         public CacheDictionary(int defaultExpiration)
@@ -56,10 +58,10 @@ namespace SimpleSession
         public T Set<T>(string key, Func<T> create, TimeSpan expireIn)
         {
             //如果此Key被使用 將原本的內容移除
-            if (_expireTasks.ContainsKey(key))
+            if (_expireContaner.ContainsKey(key))
             {
-                _expireTasks[key].Cancel();
-                _expireTasks.Remove(key);
+                _expireContaner[key].Cancel();
+                _expireContaner.Remove(key);
             }
 
             var expirationTokenSource = new CancellationTokenSource();
@@ -67,7 +69,7 @@ namespace SimpleSession
             //物件快取
             Task.Delay(expireIn, expirationToken).ContinueWith(_ => Expire(key), expirationToken);
 
-            _expireTasks[key] = expirationTokenSource;
+            _expireContaner[key] = expirationTokenSource;
 
             return (T)(this[key] = create());
         }
@@ -78,8 +80,8 @@ namespace SimpleSession
         /// <param name="key"></param>
         private void Expire(string key)
         {
-            if (_expireTasks.ContainsKey(key))
-                _expireTasks.Remove(key);
+            if (_expireContaner.ContainsKey(key))
+                _expireContaner.Remove(key);
 
             Remove(key);
         }
