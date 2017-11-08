@@ -10,12 +10,13 @@ namespace SimpleSession
     /// </summary>
     public class SessionHanlder : IHttpHandler
     {
-        private MyApplication app;
+        //請求上下文
+        private ApplicationContext app;
 
         public SessionHanlder()
 
         {
-            app = new MyApplication(HttpContext.Current);
+            app = new ApplicationContext(HttpContext.Current);
         }
 
         public void ProcessRequest(HttpContext context)

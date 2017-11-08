@@ -5,28 +5,26 @@ using System.Web;
 
 namespace SimpleSession
 {
-    public class MyApplication
+    /// <summary>
+    /// 請求上下文
+    /// </summary>
+    public class ApplicationContext
     {
-        private readonly string SessionID = "MySessionID";
+        /// <summary>
+        /// 存在Cookie中的SessionID
+        /// </summary>
+        private readonly string MySessionID = "MySessionID";
 
         public HttpRequest Request { get; private set; }
         public HttpResponse Respone { get; private set; }
 
-        public MyApplication(HttpContext context)
+        public ApplicationContext(HttpContext context)
         {
             Respone = context.Response;
             Request = context.Request;
         }
 
         private static SessionPool _container = new SessionPool();
-
-        private static SessionPool SessionPool
-        {
-            get
-            {
-                return _container;
-            }
-        }
 
         public SessionObject Session
         {
@@ -37,23 +35,26 @@ namespace SimpleSession
         }
 
         /// <summary>
-        /// 取得Session對象
+        /// 從SessionPool中取得Session對象
         /// </summary>
         /// <returns></returns>
         private SessionObject GetSessionObj()
         {
             Guid sessionGuid;
-            var cookieSessionID = HttpContext.Current.Request.Cookies[SessionID];
-            if (cookieSessionID == null)
+            HttpCookie CookieSessionID = Request.Cookies[MySessionID];
+            //如果沒有MySessionID的cookie，做一個新的
+            if (CookieSessionID == null)
             {
                 sessionGuid = Guid.NewGuid();
-                HttpCookie cookie = new HttpCookie(SessionID, sessionGuid.ToString())
-                { Expires = DateTime.Now.AddDays(60) };
+                HttpCookie cookie = new HttpCookie(MySessionID, sessionGuid.ToString())
+                {
+                    Expires = DateTime.Now.AddDays(60)
+                };
                 Respone.Cookies.Add(cookie);
             }
             else
             {
-                sessionGuid = Guid.Parse(cookieSessionID.Value);
+                sessionGuid = Guid.Parse(CookieSessionID.Value);
             }
             return _container[sessionGuid];
         }
