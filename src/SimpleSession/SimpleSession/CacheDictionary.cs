@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -10,18 +11,18 @@ namespace SimpleSession
     /// <summary>
     /// 自己做簡單快取
     /// </summary>
-    public class CacheDictionary : Dictionary<string, object>
+    public class CacheDictionary : ConcurrentDictionary<string, object>
     {
         /// <summary>
         /// 掌管物件存活時間的集合
         /// </summary>
-        private readonly Dictionary<string, CancellationTokenSource> _expireContaner =
-            new Dictionary<string, CancellationTokenSource>();
+        private readonly ConcurrentDictionary<string, CancellationTokenSource> _expireContainer =
+            new ConcurrentDictionary<string, CancellationTokenSource>();
 
         /// <summary>
         /// 有效時間
         /// </summary>
-        private int _defaultExpiration;
+        private readonly int _defaultExpiration;
 
         public CacheDictionary() : this(defaultExpiration: 5)
         {
@@ -58,10 +59,9 @@ namespace SimpleSession
         public T Set<T>(string key, Func<T> create, TimeSpan expireIn)
         {
             //如果此Key被使用 將原本的內容移除
-            if (_expireContaner.ContainsKey(key))
+            if (_expireContainer.TryRemove(key,out var cancellationToken))
             {
-                _expireContaner[key].Cancel();
-                _expireContaner.Remove(key);
+                cancellationToken.Cancel();
             }
 
             var expirationTokenSource = new CancellationTokenSource();
@@ -69,7 +69,7 @@ namespace SimpleSession
             //物件快取
             Task.Delay(expireIn, expirationToken).ContinueWith(_ => Expire(key), expirationToken);
 
-            _expireContaner[key] = expirationTokenSource;
+            _expireContainer[key] = expirationTokenSource;
 
             return (T)(this[key] = create());
         }
@@ -80,10 +80,8 @@ namespace SimpleSession
         /// <param name="key"></param>
         private void Expire(string key)
         {
-            if (_expireContaner.ContainsKey(key))
-                _expireContaner.Remove(key);
-
-            Remove(key);
+            _expireContainer.TryRemove(key, out var cancellationToken);
+            TryRemove(key, out var obj);
         }
     }
 }

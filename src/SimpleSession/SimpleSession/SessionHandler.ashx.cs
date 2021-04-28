@@ -6,14 +6,14 @@ using System.Web;
 namespace SimpleSession
 {
     /// <summary>
-    /// SessionHanlder 的摘要描述
+    /// SessionHandler 的摘要描述
     /// </summary>
-    public class SessionHanlder : IHttpHandler
+    public class SessionHandler : IHttpHandler
     {
         //請求上下文
-        private ApplicationContext app;
+        private readonly ApplicationContext app;
 
-        public SessionHanlder()
+        public SessionHandler()
 
         {
             app = new ApplicationContext(HttpContext.Current);
@@ -23,7 +23,7 @@ namespace SimpleSession
         {
             if (null == app.Session["Time"])
             {
-                app.Session["Time"] = $"Hello {DateTime.Now.ToString("yyyy-MM-dd hh-mm-ss")}";
+                app.Session["Time"] = $"Hello {DateTime.Now:yyyy-MM-dd hh-mm-ss}";
             }
             context.Response.Write(app.Session["Time"]);
             context.Response.ContentType = "text/plain";

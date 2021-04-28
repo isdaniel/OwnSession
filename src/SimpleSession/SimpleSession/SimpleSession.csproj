@@ -24,6 +24,7 @@
     <UseGlobalApplicationHostFile />
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
+    <Use64BitIISExpress />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -62,7 +63,7 @@
     <Reference Include="System.EnterpriseServices" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="SessionHanlder.ashx" />
+    <Content Include="SessionHandler.ashx" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
@@ -75,9 +76,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CacheDictionary.cs" />
-    <Compile Include="SessionHanlder.ashx.cs">
-      <DependentUpon>SessionHanlder.ashx</DependentUpon>
+    <Compile Include="SessionHandler.ashx.cs">
+      <DependentUpon>SessionHandler.ashx</DependentUpon>
     </Compile>
+    <Compile Include="SessionObject.cs" />
+    <Compile Include="SessionPool.cs" />
     <Compile Include="SessionProvider.cs" />
   </ItemGroup>
   <ItemGroup>
